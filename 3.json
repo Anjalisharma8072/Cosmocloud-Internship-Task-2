@@ -1,0 +1,41 @@
+[
+  {
+    "$addFields": {
+      "fairAvgRating": {
+        "$cond": {
+          "if": { "$gt": [ { "$convert": { "input": "$imdb.votes", "to": "double", "onError": 0, "onNull": 0 } }, 0 ] },
+          "then": { "$divide": [
+            { "$convert": { "input": "$imdb.rating", "to": "double", "onError": 0, "onNull": 0 } },
+            { "$convert": { "input": "$imdb.votes", "to": "double", "onError": 0, "onNull": 0 } }
+          ] },
+          "else": 0
+        }
+      }
+    }
+  },
+  {
+    "$sort": {
+      "fairAvgRating": -1
+    }
+  },
+  {
+    "$limit": 5
+  },
+  {
+    "$lookup": {
+      "from": "comments",
+      "localField": "_id",
+      "foreignField": "movie_id",
+      "as": "comments"
+    }
+  },
+  {
+    "$project": {
+      "title": "$title",
+      "imdbRating": "$fairAvgRating",
+      "commentCount":  { "$size": "$comments" },
+      "_id": 0
+    }
+  }
+]
+
